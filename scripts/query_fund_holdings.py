@@ -144,20 +144,24 @@ def get_fund_holdings(fund_code: str, top_n: int = 20) -> Optional[Dict]:
 
         # 提取重仓股
         holdings = []
+        stock_codes_seen = set()  # 用于去重的股票代码集合
         pattern = r'<td><a[^>]*>(\d+)</a></td>\s*<td[^>]*><a[^>]*>([^<]+)</a></td>.*?<td[^>]*class=\'tor\'>([\d.]+)%</td>.*?<td[^>]*class=\'tor\'>([\d,]+(?:\.\d+)?)</td>'
 
         matches = re.findall(pattern, text, re.DOTALL)
 
         for match in matches[:top_n]:
             stock_code, stock_name, proportion, market_value = match
-            # 获取涨跌幅度
-            change_percent = get_stock_price_change(stock_code)
-            holdings.append({
-                'stock_code': stock_code,
-                'stock_name': stock_name,
-                'proportion': float(proportion),
-                'change_percent': change_percent
-            })
+            # 检查股票代码是否已经添加过，避免重复
+            if stock_code not in stock_codes_seen:
+                stock_codes_seen.add(stock_code)
+                # 获取涨跌幅度
+                change_percent = get_stock_price_change(stock_code)
+                holdings.append({
+                    'stock_code': stock_code,
+                    'stock_name': stock_name,
+                    'proportion': float(proportion),
+                    'change_percent': change_percent
+                })
 
         if not holdings:
             return None
